@@ -1,27 +1,22 @@
 package main
 
-// "github.com/aziz-wahyudin/registration-api/config"
-// "github.com/aziz-wahyudin/registration-api/factory"
-// "github.com/aziz-wahyudin/registration-api/utils/database/mysql"
+import (
+	"fmt"
+	"log"
+	"net/http"
 
-// "github.com/labstack/echo/v4"
-// "github.com/labstack/echo/v4/middleware"
+	"github.com/aziz-wahyudin/registration-api/config"
+	"github.com/aziz-wahyudin/registration-api/factory"
+	"github.com/aziz-wahyudin/registration-api/utils/database/mysql"
+)
 
 func main() {
-	//----------main---------
-	// cfg := config.GetConfig()
-	// db := mysql.InitDB(cfg)
+	cfg := config.GetConfig()
+	db := mysql.InitDB(cfg)
+	mysql.DBMigration(db)
 
-	// mysql.DBMigration(db)
+	factory.InitFactory(db)
 
-	// e := echo.New()
-
-	// factory.InitFactory(e, db)
-
-	// e.Use(middleware.Logger())
-	// e.Pre(middleware.RemoveTrailingSlash())
-	// e.Use(middleware.CORS())
-
-	// e.Start(":8080")
-
+	fmt.Println("starting at http://localhost:8080/")
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }

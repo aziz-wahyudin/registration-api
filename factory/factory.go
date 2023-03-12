@@ -1,14 +1,17 @@
 package factory
 
-// userDelivery "github.com/ALTA-BE13-Aziz/rest-api-clean-arch/features/user/delivery"
-// userRepo "github.com/ALTA-BE13-Aziz/rest-api-clean-arch/features/user/repository"
-// userService "github.com/ALTA-BE13-Aziz/rest-api-clean-arch/features/user/service"
+import (
+	userDelivery "github.com/aziz-wahyudin/registration-api/features/user/delivery"
+	userRepo "github.com/aziz-wahyudin/registration-api/features/user/repository"
+	userService "github.com/aziz-wahyudin/registration-api/features/user/service"
 
-// "github.com/labstack/echo/v4"
-// "gorm.io/gorm"
+	// "net/http"
 
-// func InitFactory(e *echo.Echo, db *gorm.DB) {
-// 	userRepoFactory := userRepo.New(db)
-// 	userServiceFactory := userService.New(userRepoFactory)
-// 	userDelivery.New(userServiceFactory, e)
-// }
+	"gorm.io/gorm"
+)
+
+func InitFactory(db *gorm.DB) {
+	userRepoFactory := userRepo.New(db)
+	userServiceFactory := userService.New(userRepoFactory)
+	userDelivery.New(userServiceFactory)
+}
