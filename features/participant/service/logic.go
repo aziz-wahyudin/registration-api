@@ -42,3 +42,26 @@ func (s *participantService) Update(input participant.ParticipantCore, id uint) 
 
 	return nil
 }
+
+// GetAll implements participant.ServiceInterface
+func (s *participantService) GetAll(page int, limit int) (data []participant.ParticipantCore, totalPage int, err error) {
+	offset := (page - 1) * limit
+	dataParticipant, count, errParticipant := s.participantRepository.GetAll(limit, offset)
+	if errParticipant != nil {
+		err = errParticipant
+		return nil, 0, err
+	}
+
+	if count < 10 {
+		totalPage = 1
+	} else if int(count)%limit == 0 {
+		totalPage = int(count) / limit
+	} else {
+		totalPage = (int(count) / limit) + 1
+	}
+
+	data = dataParticipant
+
+	return
+
+}

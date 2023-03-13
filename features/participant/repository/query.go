@@ -43,3 +43,28 @@ func (r *participantRepository) Update(input participant.ParticipantCore, id uin
 	}
 	return nil
 }
+
+// GetAll implements participant.RepositoryInterface
+func (r *participantRepository) GetAll(limit int, offset int) (data []participant.ParticipantCore, count int64, err error) {
+	var participants []Participant
+
+	query := "SELECT * FROM participants"
+	tx := r.db.Raw(query).Scan(&participants).Count(&count)
+	if tx.Error != nil {
+		return nil, 0, tx.Error
+	}
+	if tx.RowsAffected == 0 {
+		return nil, 0, errors.New("error query count")
+	}
+
+	tx1 := r.db.Raw(query).Limit(limit).Offset(offset).Find(&participants)
+	if tx1.Error != nil {
+		return nil, 0, tx1.Error
+	}
+	if tx1.RowsAffected == 0 {
+		return nil, 0, errors.New("get all data failed, error query data")
+	}
+
+	data = ListToCore(participants)
+	return data, count, nil
+}
