@@ -1,7 +1,8 @@
 package middlewares
 
 import (
-	"context"
+	// "context"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
+/*
 func JWTMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenString := r.Header.Get("Authorization")
@@ -38,6 +40,40 @@ func JWTMiddleware(next http.Handler) http.Handler {
 		ctx = context.WithValue(ctx, "user", claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+*/
+
+func JWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Get the JWT token from the "Authorization" header
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			http.Error(w, "Authorization header missing", http.StatusUnauthorized)
+			return
+		}
+
+		// Parse the JWT token
+		token, err := jwt.Parse(authHeader, func(token *jwt.Token) (interface{}, error) {
+			// Verify the JWT signing method and key
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+			}
+			return []byte(os.Getenv("SECRET_JWT")), nil
+		})
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		if !token.Valid {
+			http.Error(w, "Invalid token", http.StatusUnauthorized)
+			return
+		}
+
+		// If the token is valid, call the next handler
+		next(w, r)
+	}
 }
 
 func CreateToken(userId int, role string) (string, error) {
