@@ -5,6 +5,7 @@ import (
 
 	"github.com/aziz-wahyudin/registration-api/features/participant"
 	"github.com/go-playground/validator/v10"
+	"github.com/labstack/gommon/log"
 )
 
 type participantService struct {
@@ -28,5 +29,16 @@ func (s *participantService) Create(input participant.ParticipantCore) (err erro
 	if errCreate != nil {
 		return errors.New("failed to insert data, error query")
 	}
+	return nil
+}
+
+// Update implements participant.ServiceInterface
+func (s *participantService) Update(input participant.ParticipantCore, id uint) error {
+	err := s.participantRepository.Update(input, id)
+	if err != nil {
+		log.Error(err.Error())
+		return err
+	}
+
 	return nil
 }

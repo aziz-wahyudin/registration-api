@@ -20,12 +20,15 @@ func New(service participant.ServiceInterface) {
 		participantService: service,
 	}
 	http.HandleFunc("/participants", middlewares.JWTMiddleware(handler.Create))
+	http.HandleFunc("/participants", middlewares.JWTMiddleware(handler.Update))
 	http.HandleFunc("/participants", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
 			// handler.Get(w, r)
 		case "POST":
 			handler.Create(w, r)
+		case "PUT":
+			handler.Update(w, r)
 		default:
 			http.Error(w, fmt.Sprintf("Unsupported method %s", r.Method), http.StatusMethodNotAllowed)
 		}
@@ -67,4 +70,36 @@ func (delivery *ParticipantDelivery) Create(w http.ResponseWriter, r *http.Reque
 	}
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(helper.SuccessResponse("success register"))
+}
+
+func (delivery *ParticipantDelivery) Update(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	participantId := middlewares.ExtractTokenUserId(r)
+
+	photoUrl, errUrl := helper.UploadFile(r, "photo")
+	if errUrl != nil {
+		http.Error(w, errUrl.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var input ParticipantReq
+	err := json.NewDecoder(r.Body).Decode(&input)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		fmt.Println(err.Error(), "error decode")
+		return
+	}
+
+	input.Photo = photoUrl
+
+	dataCore := toCore(input)
+	errUpdate := delivery.participantService.Update(dataCore, uint(participantId))
+	if errUpdate != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		log.Printf("Failed to update info: %s", err.Error())
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(helper.SuccessResponse("success update info"))
+
 }
