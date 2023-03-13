@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/aziz-wahyudin/registration-api/features/participant"
 	"github.com/aziz-wahyudin/registration-api/middlewares"
@@ -21,10 +22,11 @@ func New(service participant.ServiceInterface) {
 	}
 	http.HandleFunc("/participants", middlewares.JWTMiddleware(handler.Create))
 	http.HandleFunc("/participants", middlewares.JWTMiddleware(handler.Update))
+	http.HandleFunc("/participants", middlewares.JWTMiddleware(handler.GetAll))
 	http.HandleFunc("/participants", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
-			// handler.Get(w, r)
+			handler.GetAll(w, r)
 		case "POST":
 			handler.Create(w, r)
 		case "PUT":
@@ -102,4 +104,21 @@ func (delivery *ParticipantDelivery) Update(w http.ResponseWriter, r *http.Reque
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(helper.SuccessResponse("success update info"))
 
+}
+
+func (delivery *ParticipantDelivery) GetAll(w http.ResponseWriter, r *http.Request) {
+	pageQuery := r.URL.Query().Get("page")
+	page, _ := strconv.Atoi(pageQuery)
+	limit := 10
+
+	res, totalPage, err := delivery.participantService.GetAll(page, limit)
+	if err != nil {
+		http.Error(w, "Bad request", http.StatusBadRequest)
+		return
+	}
+
+	data := FromCoreList(res)
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(helper.SuccessWithDataPaginationResponse("succes get all data", data, totalPage))
 }
